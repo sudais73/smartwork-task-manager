@@ -213,7 +213,7 @@ export default function DashboardPage() {
           <p className="text-gray-500">Analyzing your tasks with OpenAI...</p>
         ) : recommendations.length > 0 ? (
           <ul className="list-disc pl-6 space-y-2">
-            {recommendations.map((task, i) => (
+            {recommendations.map((task: string, i: number) => (
               
               <li key={i} className="bg-white border rounded-lg p-3 shadow-sm">
                 {task}

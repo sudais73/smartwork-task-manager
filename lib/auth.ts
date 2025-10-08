@@ -1,33 +1,35 @@
-
-import NextAuth from "next-auth"
-import GitHub from "next-auth/providers/github"
-import Google from "next-auth/providers/google"
+import NextAuth, { type Session, type User as NextAuthUser } from "next-auth";
+import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 import User from "@/models/User";
 import { connectDB } from "./dbConnect";
- 
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-   providers: [
-    GitHub,
-    Google
+  providers: [
+    GitHubProvider,
+    GoogleProvider,
   ],
 
   callbacks: {
-    async signIn({ user }: { user: any }) {
-        
-      // Persist user to our DB on first sign-in
+    // ✅ Type user properly from NextAuth
+    async signIn({ user }: { user: NextAuthUser }) {
       await connectDB();
-      // Upsert user by email 
+
+      // Upsert user by email
       await User.findOneAndUpdate(
         { email: user.email },
         { name: user.name, image: user.image },
         { upsert: true }
       );
+
       return true;
     },
-    async session({ session }: { session: any }) {
+
+    // ✅ Type session properly from NextAuth
+    async session({ session }: { session: Session }) {
       return session;
     },
-
   },
-  secret: process.env.AUTH_SECRET
-})
+
+  secret: process.env.AUTH_SECRET,
+});

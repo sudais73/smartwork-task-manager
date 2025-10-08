@@ -15,7 +15,7 @@ interface Task {
   dueDate?: string;
 }
 
-const TaskPage = () => {
+const TaskPage: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | 'todo' | 'in-progress' | 'done'>('all');
@@ -26,7 +26,7 @@ const TaskPage = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const res = await axios.get('/api/tasks');
+        const res = await axios.get<Task[]>('/api/tasks'); // ✅ typed response
         setTasks(res.data);
       } catch (err) {
         console.error('Error fetching tasks:', err);
@@ -38,12 +38,12 @@ const TaskPage = () => {
   }, []);
 
   // Update task status
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
+  const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
     try {
       setUpdatingId(taskId);
       await axios.put(`/api/tasks/${taskId}`, { status: newStatus });
       setTasks((prev) =>
-        prev.map((t) => (t._id === taskId ? { ...t, status: newStatus as Task['status'] } : t))
+        prev.map((t) => (t._id === taskId ? { ...t, status: newStatus } : t))
       );
     } catch (error) {
       console.error('Error updating status:', error);
@@ -84,7 +84,6 @@ const TaskPage = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Your Tasks</h1>
-           
 
           <Link
             href="/tasks/new"
@@ -93,15 +92,21 @@ const TaskPage = () => {
             <FaPlus /> New Task
           </Link>
         </div>
-        <Link href='/dashboard' className=" flex gap-1 items-center font-bold text-green-800 mb-6 text-center">
-        <FaArrowLeft/> Dashboard
+
+        <Link
+          href="/dashboard"
+          className="flex gap-1 items-center font-bold text-green-800 mb-6 text-center"
+        >
+          <FaArrowLeft /> Dashboard
         </Link>
 
         {/* Filter Dropdown */}
         <div className="mb-6 flex justify-end">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as 'all' | 'todo' | 'in-progress' | 'done')
+            }
             className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Tasks</option>
@@ -127,37 +132,25 @@ const TaskPage = () => {
                       : '#22c55e',
                 }}
               >
-                {/* Title */}
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                  {task.title}
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">{task.title}</h2>
 
-                {/* Description */}
                 {task.description && (
-                  <p className="text-gray-600 mb-3 line-clamp-3">
-                    {task.description}
-                  </p>
-                )}
-                 {/* Description */}
-                {task.priority && (
-                  <p className="text-gray-600 mb-3 line-clamp-3">
-                   Priority: {task.priority}
-                  </p>
+                  <p className="text-gray-600 mb-3 line-clamp-3">{task.description}</p>
                 )}
 
-                {/* Due Date */}
+                <p className="text-gray-600 mb-3">Priority: {task.priority}</p>
+
                 {task.dueDate && (
                   <p className="text-sm text-gray-400 mb-3">
                     Due: {new Date(task.dueDate).toLocaleDateString()}
                   </p>
                 )}
 
-                {/* Status Dropdown */}
                 <div className="flex items-center justify-between mt-2">
                   <select
                     disabled={updatingId === task._id}
                     value={task.status}
-                    onChange={(e) => handleStatusChange(task._id, e.target.value)}
+                    onChange={(e) => handleStatusChange(task._id, e.target.value as Task['status'])}
                     className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="todo">Todo</option>
@@ -165,7 +158,6 @@ const TaskPage = () => {
                     <option value="done">Done</option>
                   </select>
 
-                  {/* Buttons */}
                   <div className="flex gap-2">
                     <button
                       onClick={() => router.push(`/tasks/edit/${task._id}`)}

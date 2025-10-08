@@ -33,11 +33,11 @@ export async function GET() {
     messages: [{ role: "user", content: prompt }],
   });
 
-  let rawResponse = completion.choices[0].message.content || "";
+  const rawResponse: string = completion.choices[0].message.content || "";
 
   // 🧹 Extract clean JSON array from the model output
-  let jsonMatch = rawResponse.match(/```json([\s\S]*?)```|(\[.*\])/);
-  let recommendation;
+  const jsonMatch = rawResponse.match(/```json([\s\S]*?)```|(\[.*\])/);
+  let recommendation: string[] | string = [];
 
   if (jsonMatch) {
     try {
@@ -50,5 +50,7 @@ export async function GET() {
     recommendation = rawResponse; // fallback
   }
 
- return NextResponse.json({ recommendation: Array.isArray(recommendation) ? recommendation : [] });
+  return NextResponse.json({
+    recommendation: Array.isArray(recommendation) ? recommendation : [],
+  });
 }
